@@ -1,0 +1,93 @@
+<robot name="aplotter">
+    <link name="base_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://aplotter_ros2/urdf/aplotter_base.stl" />
+            </geometry>
+            <material name="">
+                <color rgba="0.718 0.365 0.412 1" />
+            </material>
+        </visual>
+    </link>
+
+
+
+    <link name="leftPLink">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius="10" length="30"/>
+            </geometry>
+            <material name="">
+                <color rgba="0.541 0.635 0.619 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="leftPJoint" type="prismatic">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="leftPLink" />
+        <axis xyz="-1 0 0" />
+        <limit lower="-300" upper="-100" effort="0" velocity="0" />
+    </joint>
+
+    <link name="leftLink">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://aplotter_ros2/urdf/arm.stl" />
+            </geometry>
+            <material name="">
+                <color rgba="0.541 0.635 0.619 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="leftJoint" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="leftPLink" />
+        <child link="leftLink" />
+        <axis xyz="0 0 -1" />
+        <limit effort="0" velocity="0" />
+    </joint>
+
+
+    <link name="rightPLink">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius="10" length="30"/>
+            </geometry>
+            <material name="">
+                <color rgba="0.239 0.329 0.404 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="rightPJoint" type="prismatic">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="base_link" />
+        <child link="rightPLink" />
+        <axis xyz="-1 0 0" />
+        <limit lower="100" upper="300" effort="0" velocity="0" />
+    </joint>
+
+    <link name="rightLink">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://aplotter_ros2/urdf/arm.stl" />
+            </geometry>
+            <material name="">
+                <color rgba="0.239 0.329 0.404 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="rightJoint" type="continuous">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="rightPLink" />
+        <child link="rightLink" />
+        <axis xyz="0 0 -1" />
+        <limit effort="0" velocity="0" />
+    </joint>
+
+</robot>
