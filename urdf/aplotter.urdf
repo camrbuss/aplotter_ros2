@@ -6,7 +6,7 @@
                 <mesh filename="package://aplotter_ros2/urdf/aplotter_base.stl" />
             </geometry>
             <material name="">
-                <color rgba="0.718 0.365 0.412 1" />
+                <color rgba="0.450 0.039 0.980 1" />
             </material>
         </visual>
     </link>
@@ -20,7 +20,7 @@
                 <mesh filename="package://aplotter_ros2/urdf/carriage.stl" />
             </geometry>
             <material name="">
-                <color rgba="0.541 0.635 0.619 1" />
+                <color rgba="0.980 0.827 0.039 1" />
             </material>
         </visual>
     </link>
@@ -28,7 +28,7 @@
         <origin xyz="0 41.356 61" rpy="0 0 0" />
         <parent link="base_link" />
         <child link="leftPLink" />
-        <axis xyz="-1 0 0" />
+        <axis xyz="1 0 0" />
         <limit lower="-300" upper="-100" effort="0" velocity="0" />
     </joint>
 
@@ -36,10 +36,10 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://aplotter_ros2/urdf/arm.stl" />
+                <mesh filename="package://aplotter_ros2/urdf/larm.stl" />
             </geometry>
             <material name="">
-                <color rgba="0.541 0.635 0.619 1" />
+                <color rgba="0.980 0.827 0.039 1" />
             </material>
         </visual>
     </link>
@@ -47,7 +47,7 @@
         <origin xyz="0 0 0" rpy="0 0 0" />
         <parent link="leftPLink" />
         <child link="leftLink" />
-        <axis xyz="0 0 -1" />
+        <axis xyz="0 0 1" />
         <limit effort="0" velocity="0" />
     </joint>
 
@@ -59,7 +59,7 @@
                 <mesh filename="package://aplotter_ros2/urdf/carriage.stl" />
             </geometry>
             <material name="">
-                <color rgba="0.239 0.329 0.404 1" />
+                <color rgba="0.980 0.674 0.039 1" />
             </material>
         </visual>
     </link>
@@ -67,7 +67,7 @@
         <origin xyz="0 41.356 61" rpy="0 0 0" />
         <parent link="base_link" />
         <child link="rightPLink" />
-        <axis xyz="-1 0 0" />
+        <axis xyz="1 0 0" />
         <limit lower="100" upper="300" effort="0" velocity="0" />
     </joint>
 
@@ -75,18 +75,18 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://aplotter_ros2/urdf/arm.stl" />
+                <mesh filename="package://aplotter_ros2/urdf/rarm.stl" />
             </geometry>
             <material name="">
-                <color rgba="0.239 0.329 0.404 1" />
+                <color rgba="0.980 0.674 0.039 1" />
             </material>
         </visual>
     </link>
     <joint name="rightJoint" type="continuous">
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 -0.12524034" />
         <parent link="rightPLink" />
         <child link="rightLink" />
-        <axis xyz="0 0 -1" />
+        <axis xyz="0 0 1" />
         <limit effort="0" velocity="0" />
     </joint>
 

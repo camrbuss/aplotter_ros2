@@ -27,16 +27,24 @@ public:
     msg_.position.push_back(0.0);
     msg_.position.push_back(0.0);
     msg_.position.push_back(0.0);
+
+    ll_ = 261;
+    lr_ = 280.19;
   }
 
 private:
   void timer_callback()
   {
     msg_.header.stamp = ros_clock_.now();
-    msg_.position[0] = 50 * std::sin(count_ * 0.01) - 200;
-    msg_.position[1] = 50 * std::sin(count_ * 0.02) + 200;
-    msg_.position[2] = std::sin(count_ * 0.01);
-    msg_.position[3] = std::sin(count_ * 0.02);
+    xl_ = 70 * std::sin(count_ * 0.02) - 180;
+    xr_ = 70 * std::sin(count_ * -0.02) + 180;
+    msg_.position[0] = xl_;
+    msg_.position[1] = xr_;
+
+    al_ = std::acos((std::pow(ll_, 2.0) + std::pow((xr_ - xl_), 2.0) - std::pow(lr_, 2.0)) / (2.0 * ll_ * (xr_ - xl_)));
+    ar_ = M_PI - std::acos((std::pow(lr_, 2.0) + std::pow((xr_ - xl_), 2.0) - std::pow(ll_, 2.0)) / (2.0 * lr_ * (xr_ - xl_)));
+    msg_.position[2] = al_;
+    msg_.position[3] = ar_;
     count_++;
     publisher_->publish(msg_);
   }
@@ -45,6 +53,13 @@ private:
   rclcpp::Clock ros_clock_;
   sensor_msgs::msg::JointState msg_;
   size_t count_;
+
+  double xl_ = 0.0;
+  double xr_ = 0.0;
+  double al_ = 0.0;
+  double ar_ = 0.0;
+  double ll_ = 0.0;
+  double lr_ = 0.0;
 };
 
 int main(int argc, char *argv[])
