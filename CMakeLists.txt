@@ -20,9 +20,10 @@ find_package(ament_cmake REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(ros2_odrive_can REQUIRED)
 
 add_executable(aplotter_state_publisher src/aplotter_state_publisher.cpp)
-ament_target_dependencies(aplotter_state_publisher rclcpp sensor_msgs)
+ament_target_dependencies(aplotter_state_publisher rclcpp sensor_msgs ros2_odrive_can)
 
 target_include_directories(aplotter_state_publisher PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
