@@ -6,8 +6,10 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "/home/camrbuss/ws_ros2/src/aplotter_ros2/include/**",
-                "/usr/include/**"
+                "./include/aplotter_ros2/**",
+                "/usr/include/**",
+                "/opt/ros/foxy/include/**",
+                "../../install/ros2_odrive_can/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
