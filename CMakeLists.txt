@@ -25,8 +25,7 @@ find_package(ros2_odrive_can REQUIRED)
 include_directories(include)
 
 add_library(aplotter_library SHARED
-  src/aplotter_state_publisher.cpp
-  src/joy_subscriber.cpp)
+  src/aplotter_state_publisher.cpp)
 ament_target_dependencies(aplotter_library rclcpp ros2_odrive_can sensor_msgs)
 
 add_executable(aplotter src/aplotter.cpp)
