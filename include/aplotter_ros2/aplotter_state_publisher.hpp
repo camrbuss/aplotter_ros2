@@ -34,15 +34,15 @@ private:
 
   void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg);
 
-  void odrive_calibrate(int8_t axis);                                                // Y button
+  void odrive_set_requested_state(int8_t axis, int8_t state);
   void odrive_toggle_closed_loop_control(int8_t axis);                               // A button, toggle between closed loop and inactive(1)
-  void odrive_home(int8_t axis);                                                     // B button
   void odrive_estop();                                                               // X button
   void odrive_clear_errors(int8_t axis);                                             // back button
   void odrive_set_control_mode(int8_t axis, int8_t control_mode, int8_t input_mode); // start button
   void odrive_adjust_max_velocity(int32_t amount);                                   // dpad up and down will increment and decrement speed
   void odrive_toggle_pen();                                                          // left joystick button to raise/lower pen
   void odrive_toggle_send_commands();
+  void odrive_set_input_velocity(int8_t axis, float velocity);
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
