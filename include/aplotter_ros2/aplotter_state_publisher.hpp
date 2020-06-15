@@ -25,6 +25,8 @@ public:
   APlotterStatePublisher();
   ~APlotterStatePublisher();
 
+  // OnSetParametersCallbackHandle::SharedPtr callback_handler;
+  // rcl_interfaces::msg::SetParametersResult param_change_callback(std::vector<rclcpp::Parameter> parameters);
 private:
   void timer_callback();
 
@@ -60,7 +62,19 @@ private:
   rclcpp::Client<ros2_odrive_can::srv::ClearErrors>::SharedPtr odrive_clear_errors_client_;
 
   sensor_msgs::msg::JointState joint_state_msg_;
+  // TODO: Segmentation Fault when using a private request
   // std::shared_ptr<ros2_odrive_can::srv::SetInputVel_Request> input_vel_request_;
+
+  struct params_t
+  {
+    int64_t control_loop_frequency;
+    double left_arm_length;
+    double right_arm_length;
+    double right_arm_extension_length;
+    double left_arm_extension_length;
+    double homed_joint_offset;
+    int64_t encoder_counts_per_mm;
+  } params_;
 
   struct joy_data_t
   {

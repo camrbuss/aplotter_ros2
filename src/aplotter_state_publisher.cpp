@@ -2,9 +2,35 @@
 
 APlotterStatePublisher::APlotterStatePublisher() : Node("aplotter_state_publisher")
 {
+  // TODO: Validate parameters
+  // callback_handler = this->add_on_set_parameters_callback(std::bind(&APlotterStatePublisher::param_change_callback, this, std::placeholders::_1));
+
+  this->declare_parameter<int64_t>("control_loop_frequency", 50);
+  this->declare_parameter<double>("left_arm_length", 350);
+  this->declare_parameter<double>("right_arm_length", 350);
+  this->declare_parameter<double>("right_arm_extension_length", 100);
+  this->declare_parameter<double>("left_arm_extension_length", 50);
+  this->declare_parameter<double>("homed_joint_offset", 70);
+  this->declare_parameter<int64_t>("encoder_counts_per_mm", 16384);
+
+  this->get_parameter("control_loop_frequency", params_.control_loop_frequency);
+  this->get_parameter("left_arm_length", params_.left_arm_length);
+  this->get_parameter("right_arm_length", params_.right_arm_length);
+  this->get_parameter("right_arm_extension_length", params_.right_arm_extension_length);
+  this->get_parameter("left_arm_extension_length", params_.left_arm_extension_length);
+  this->get_parameter("homed_joint_offset", params_.homed_joint_offset);
+  this->get_parameter("encoder_counts_per_mm", params_.encoder_counts_per_mm);
+
+  RCLCPP_INFO(this->get_logger(), "Param control_loop_frequency is: %i", params_.control_loop_frequency);
+  RCLCPP_INFO(this->get_logger(), "Param left_arm_length is: %f", params_.left_arm_length);
+  RCLCPP_INFO(this->get_logger(), "Param right_arm_length is: %f", params_.right_arm_length);
+  RCLCPP_INFO(this->get_logger(), "Param right_arm_extension_length is: %f", params_.right_arm_extension_length);
+  RCLCPP_INFO(this->get_logger(), "Param left_arm_extension_length is: %f", params_.left_arm_extension_length);
+  RCLCPP_INFO(this->get_logger(), "Param homed_joint_offset is: %f", params_.homed_joint_offset);
+  RCLCPP_INFO(this->get_logger(), "Param encoder_counts_per_mm is: %i", params_.encoder_counts_per_mm);
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&APlotterStatePublisher::timer_callback, this));
+  timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / params_.control_loop_frequency), std::bind(&APlotterStatePublisher::timer_callback, this));
   timer_->cancel();
   odrive_subscription_ = this->create_subscription<ros2_odrive_can::msg::OdriveStatus>("/odrive/odrive_status", 5, std::bind(&APlotterStatePublisher::odrive_status_callback, this, std::placeholders::_1));
   joy_subscription_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&APlotterStatePublisher::joy_callback, this, std::placeholders::_1));
@@ -201,15 +227,15 @@ void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr
   joy_previous_state_ = joy_current_state_;
 }
 
-  void APlotterStatePublisher::odrive_set_input_velocity(int8_t axis, float velocity){
-    auto input_vel_request = std::make_shared<ros2_odrive_can::srv::SetInputVel::Request>();
+void APlotterStatePublisher::odrive_set_input_velocity(int8_t axis, float velocity)
+{
+  auto input_vel_request = std::make_shared<ros2_odrive_can::srv::SetInputVel::Request>();
 
-    input_vel_request->axis = axis;
-    input_vel_request->input_vel = velocity;
-    input_vel_request->current_ff = 0;
-    auto result_future = odrive_set_input_vel_client_->async_send_request(input_vel_request);
-  }
-
+  input_vel_request->axis = axis;
+  input_vel_request->input_vel = velocity;
+  input_vel_request->current_ff = 0;
+  auto result_future = odrive_set_input_vel_client_->async_send_request(input_vel_request);
+}
 
 void APlotterStatePublisher::odrive_set_requested_state(int8_t axis, int8_t state)
 {
@@ -240,7 +266,7 @@ void APlotterStatePublisher::odrive_toggle_closed_loop_control(int8_t axis)
     requested_state = 8; // Closed Loop Control
   else if (odrive_axis_[axis].state == 8)
     requested_state = 1; // Idle
-  
+
   odrive_set_requested_state(axis, requested_state);
 
   RCLCPP_INFO(this->get_logger(), "Requesting State: %i for ODrive Axis: %i", requested_state, axis);
