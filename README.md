@@ -14,8 +14,8 @@ The controls needed to  achieve velocity control are sequential. The left bumper
 |-|-|-|
 | 1 | <Left/Right> Bumper + X | E-Stop |
 | 2 | <Left/Right> Bumper + Y | Calibrate Axis |
-| 3 | <Left/Right> Bumper + A | Home Axis |
-| 4 | <Left/Right> Bumper + B | Request Close Loop Control |
+| 3 | <Left/Right> Bumper + A | Request Closed Loop Control |
+| 4 | <Left/Right> Bumper + B | Home Axis |
 | 5 | <Left/Right> Bumper + Back | Clear Axis Error |
 | 6 | Menu | Start Command Loop |
 | 7 | <Left/Right> Bumper + D-Pad Left | Set Velocity Control Mode |

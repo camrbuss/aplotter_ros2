@@ -6,28 +6,28 @@ APlotterStatePublisher::APlotterStatePublisher() : Node("aplotter_state_publishe
   // callback_handler = this->add_on_set_parameters_callback(std::bind(&APlotterStatePublisher::param_change_callback, this, std::placeholders::_1));
 
   this->declare_parameter<int64_t>("control_loop_frequency", 50);
-  this->declare_parameter<double>("left_arm_length", 350);
-  this->declare_parameter<double>("right_arm_length", 350);
-  this->declare_parameter<double>("right_arm_extension_length", 100);
-  this->declare_parameter<double>("left_arm_extension_length", 50);
-  this->declare_parameter<double>("homed_joint_offset", 70);
-  this->declare_parameter<int64_t>("encoder_counts_per_mm", 16384);
+  this->declare_parameter<float>("left_arm_length", 350);
+  this->declare_parameter<float>("right_arm_length", 350);
+  this->declare_parameter<float>("right_arm_extension_length", 100);
+  this->declare_parameter<float>("right_arm_offset_angle", 0.09);
+  this->declare_parameter<float>("homed_joint_offset", 95);
+  this->declare_parameter<float>("mm_per_rev", 12.5);
 
   this->get_parameter("control_loop_frequency", params_.control_loop_frequency);
-  this->get_parameter("left_arm_length", params_.left_arm_length);
-  this->get_parameter("right_arm_length", params_.right_arm_length);
-  this->get_parameter("right_arm_extension_length", params_.right_arm_extension_length);
-  this->get_parameter("left_arm_extension_length", params_.left_arm_extension_length);
+  this->get_parameter("left_arm_length", params_.L2);
+  this->get_parameter("right_arm_length", params_.L1);
+  this->get_parameter("right_arm_extension_length", params_.L3);
+  this->get_parameter("right_arm_offset_angle", params_.A1);
   this->get_parameter("homed_joint_offset", params_.homed_joint_offset);
-  this->get_parameter("encoder_counts_per_mm", params_.encoder_counts_per_mm);
+  this->get_parameter("mm_per_rev", params_.mm_per_rev);
 
   RCLCPP_INFO(this->get_logger(), "Param control_loop_frequency is: %i", params_.control_loop_frequency);
-  RCLCPP_INFO(this->get_logger(), "Param left_arm_length is: %f", params_.left_arm_length);
-  RCLCPP_INFO(this->get_logger(), "Param right_arm_length is: %f", params_.right_arm_length);
-  RCLCPP_INFO(this->get_logger(), "Param right_arm_extension_length is: %f", params_.right_arm_extension_length);
-  RCLCPP_INFO(this->get_logger(), "Param left_arm_extension_length is: %f", params_.left_arm_extension_length);
+  RCLCPP_INFO(this->get_logger(), "Param left_arm_length is: %f", params_.L2);
+  RCLCPP_INFO(this->get_logger(), "Param right_arm_length is: %f", params_.L1);
+  RCLCPP_INFO(this->get_logger(), "Param right_arm_extension_length is: %f", params_.L3);
+  RCLCPP_INFO(this->get_logger(), "Param right_arm_offset_angle is: %f", params_.A1);
   RCLCPP_INFO(this->get_logger(), "Param homed_joint_offset is: %f", params_.homed_joint_offset);
-  RCLCPP_INFO(this->get_logger(), "Param encoder_counts_per_mm is: %i", params_.encoder_counts_per_mm);
+  RCLCPP_INFO(this->get_logger(), "Param mm_per_rev is: %i", params_.mm_per_rev);
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / params_.control_loop_frequency), std::bind(&APlotterStatePublisher::timer_callback, this));
@@ -110,11 +110,17 @@ void APlotterStatePublisher::timer_callback()
   }
   else
   {
-    // TOODO: adjust to control both axis in either position or velocity control
-    odrive_set_input_velocity(0, this->y_vel_);
-    odrive_set_input_velocity(1, this->x_vel_);
+    odrive_get_encoder_estimates(0);
+    odrive_get_encoder_estimates(1);
 
-    RCLCPP_INFO(this->get_logger(), "Sent A0 Vel: %f A1 Vel: %f", this->y_vel_, this->y_vel_);
+    if (!isnanf(a_pos_ / a_vel_ / b_pos_ / b_vel_))
+      this->compute_jacobian();
+
+    // TOODO: adjust to control both axis in either position or velocity control
+    odrive_set_input_velocity(0, this->b_vel_setpoint_);
+    odrive_set_input_velocity(1, this->a_vel_setpoint_);
+
+    // RCLCPP_INFO(this->get_logger(), "Sent A0 Vel: %f A1 Vel: %f", this->y_vel_, this->y_vel_);
   }
 }
 
@@ -141,11 +147,25 @@ void APlotterStatePublisher::odrive_status_callback(const ros2_odrive_can::msg::
 // TODO: Implement Inverse Kinematics
 // Joystick will set End Effector X and Y Velocities. Jacobain will calculate
 // The velocities to send to each ODrive Motor
-void APlotterStatePublisher::compute_jacobian(float a_pos, float b_pos, float a_vel, float b_vel)
+void APlotterStatePublisher::compute_jacobian()
 {
   // TODO implement real jacobian
-  this->a_vel_setpoint_ = a_pos + a_vel;
-  this->b_vel_setpoint_ = b_pos + b_vel;
+  float a = -this->a_pos_ * this->params_.mm_per_rev + this->params_.homed_joint_offset;
+  float b = this->b_pos_ * this->params_.mm_per_rev + this->params_.homed_joint_offset;
+
+  float j = (-std::pow(a, 2) - 2.0f * a * b - std::pow(b, 2) + std::pow(params_.L1, 2) - std::pow(params_.L2, 2)) * params_.L3;
+  float k = params_.A1 + std::acos((std::pow(a + b, 2) + std::pow(params_.L1, 2) - std::pow(params_.L2, 2)) / (2. * params_.L1 * (a + b)));
+  float l = 2.0f * std::pow(a + b, 2) * params_.L1 * std::sqrt(1.0f - (std::pow(std::pow(a + b, 2) + std::pow(params_.L1, 2) - std::pow(params_.L2, 2), 2) / (4.0f * std::pow(a + b, 2) * std::pow(params_.L1, 2))));
+
+  float f = j * std::sin(k) / l;
+  float g = j * std::cos(k) / l;
+  RCLCPP_INFO(this->get_logger(), "a:%.3f b:%.3f j:%.3f k:%.3f l:%.3f f:%.3f g:%.3f", a, b, j, k, l, f, g);
+
+  this->a_vel_setpoint_ = -x_vel_ - ((-1.0f - f) * y_vel_ / g);
+  this->b_vel_setpoint_ = -x_vel_ + ((f * y_vel_) / g);                     // flipped sign
+  this->a_vel_setpoint_ = this->a_vel_setpoint_ / this->params_.mm_per_rev; // mm/s back to rev/s
+  this->b_vel_setpoint_ = this->b_vel_setpoint_ / this->params_.mm_per_rev;
+  RCLCPP_INFO(this->get_logger(), "Apos:%.3f Avel:%.3f Bpos:%.3f Bvel:%.3f Avelset:%.3f Bvelset:%.3f", a, a_vel_, b, b_vel_, this->a_vel_setpoint_, this->b_vel_setpoint_);
 }
 
 void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -227,6 +247,41 @@ void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr
   joy_previous_state_ = joy_current_state_;
 }
 
+void APlotterStatePublisher::odrive_get_encoder_estimates(int8_t axis)
+{
+  auto get_estimate_request = std::make_shared<ros2_odrive_can::srv::GetEncoderEstimates::Request>();
+  get_estimate_request->axis = axis;
+
+  // TODO: Capturing this in the lamda causes a seg fault. Scrappy fix below
+  // auto result_future = odrive_get_encoder_estimates_client_->async_send_request(std::move(get_estimate_request), [this](rclcpp::Client<ros2_odrive_can::srv::GetEncoderEstimates>::SharedFutureWithRequest future) {
+  //   if (future.get().first->axis == 0)
+  //   {
+  //     this->b_pos_ = future.get().second->pos_estimate;
+  //     this->b_vel_ = future.get().second->vel_estimate;
+  //   }
+  //   else if (future.get().first->axis == 1)
+  //   {
+  //     this->a_pos_ = future.get().second->pos_estimate;
+  //     this->a_vel_ = future.get().second->vel_estimate;
+  //   }
+  // });
+  auto result_future = odrive_get_encoder_estimates_client_->async_send_request(std::move(get_estimate_request), std::bind(&APlotterStatePublisher::odrive_get_encoder_estimates_response, this, std::placeholders::_1));
+}
+
+void APlotterStatePublisher::odrive_get_encoder_estimates_response(rclcpp::Client<ros2_odrive_can::srv::GetEncoderEstimates>::SharedFuture future)
+{
+  if (future.get()->axis_response == 0)
+  {
+    this->b_pos_ = future.get()->pos_estimate;
+    this->b_vel_ = future.get()->vel_estimate;
+  }
+  else if (future.get()->axis_response == 1)
+  {
+    this->a_pos_ = future.get()->pos_estimate;
+    this->a_vel_ = future.get()->vel_estimate;
+  }
+}
+
 void APlotterStatePublisher::odrive_set_input_velocity(int8_t axis, float velocity)
 {
   auto input_vel_request = std::make_shared<ros2_odrive_can::srv::SetInputVel::Request>();
@@ -239,18 +294,18 @@ void APlotterStatePublisher::odrive_set_input_velocity(int8_t axis, float veloci
 
 void APlotterStatePublisher::odrive_set_requested_state(int8_t axis, int8_t state)
 {
-  RCLCPP_INFO(this->get_logger(), "ODrive Axis: %i Requested State: %i", axis, state);
+  RCLCPP_INFO(this->get_logger(), "Set Requested State - Axis: %i Requested State: %i", axis, state);
   auto request = std::make_shared<ros2_odrive_can::srv::SetAxisRequestedState::Request>();
   request->axis = axis;
   request->requested_state = state;
 
   // TODO: Change this to use SharedFutureWithRequest to set is_calibrated after getting return value
   // TODO: Capturing this is giving seg faults
-  // auto response_received_callback = [](rclcpp::Client<ros2_odrive_can::srv::SetAxisRequestedState>::SharedFuture future) {
+  // auto response_received_callback = [this](rclcpp::Client<ros2_odrive_can::srv::SetAxisRequestedState>::SharedFutureWithRequest future) {
   //   if (future.get().second->success)
   //     this->odrive_axis_[future.get().first->axis].is_calibrated = true;
-  //   RCLCPP_INFO(this->get_logger(), "ODrive Calibrate returned: %i", future.get()->success);
-  //   std::cout << "Service Response" << future.get()->success;
+  //   RCLCPP_INFO(this->get_logger(), "ODrive Calibrate returned: %i", future.get().second->success);
+  //   std::cout << "Service Response" << future.get().second->success;
   // };
 
   // auto future_result = odrive_set_axis_requested_state_client_->async_send_request(request, response_received_callback);
@@ -261,15 +316,21 @@ void APlotterStatePublisher::odrive_set_requested_state(int8_t axis, int8_t stat
 void APlotterStatePublisher::odrive_toggle_closed_loop_control(int8_t axis)
 {
   // TODO: Check that the axis is calibrated before entering closed loop control
-  int requested_state;
+  int requested_state = -1;
   if (odrive_axis_[axis].state == 1)
     requested_state = 8; // Closed Loop Control
   else if (odrive_axis_[axis].state == 8)
     requested_state = 1; // Idle
 
-  odrive_set_requested_state(axis, requested_state);
-
-  RCLCPP_INFO(this->get_logger(), "Requesting State: %i for ODrive Axis: %i", requested_state, axis);
+  if (requested_state < 0)
+  {
+    RCLCPP_INFO(this->get_logger(), "Toggle Closed Loop Control Fail due to ODrive Axis: %i state", axis);
+  }
+  else
+  {
+    odrive_set_requested_state(axis, requested_state);
+    RCLCPP_INFO(this->get_logger(), "Requesting State: %i for ODrive Axis: %i", requested_state, axis);
+  }
 }
 
 // X button
@@ -303,7 +364,7 @@ void APlotterStatePublisher::odrive_set_control_mode(int8_t axis, int8_t control
 }
 
 // dpad up and down will increment and decrement speed
-void APlotterStatePublisher::odrive_adjust_max_velocity(int32_t amount)
+void APlotterStatePublisher::odrive_adjust_max_velocity(float amount)
 {
   max_velocity_ = max_velocity_ + amount;
   RCLCPP_INFO(this->get_logger(), "ODrive Max Velocity is now: %f", max_velocity_);

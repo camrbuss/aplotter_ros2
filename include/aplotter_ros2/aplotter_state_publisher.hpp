@@ -17,7 +17,7 @@
 #include "ros2_odrive_can/srv/clear_errors.hpp"
 
 #define SRVCALLTIMEOUT std::chrono::milliseconds(1000)
-#define VELOCITYINCREMENTAMOUNT 1000000
+#define VELOCITYINCREMENTAMOUNT 5.0
 
 class APlotterStatePublisher : public rclcpp::Node
 {
@@ -32,16 +32,19 @@ private:
 
   void odrive_status_callback(const ros2_odrive_can::msg::OdriveStatus::SharedPtr msg);
 
-  void compute_jacobian(float a_pos, float b_pos, float a_vel, float b_vel);
+  void compute_jacobian();
 
   void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg);
 
+  void odrive_get_encoder_estimates(int8_t axis);
+  // TODO: Adjust response to use SharedFutureWithResponse. Current use seg faults
+  void odrive_get_encoder_estimates_response(rclcpp::Client<ros2_odrive_can::srv::GetEncoderEstimates>::SharedFuture future);
   void odrive_set_requested_state(int8_t axis, int8_t state);
   void odrive_toggle_closed_loop_control(int8_t axis);                               // A button, toggle between closed loop and inactive(1)
   void odrive_estop();                                                               // X button
   void odrive_clear_errors(int8_t axis);                                             // back button
   void odrive_set_control_mode(int8_t axis, int8_t control_mode, int8_t input_mode); // start button
-  void odrive_adjust_max_velocity(int32_t amount);                                   // dpad up and down will increment and decrement speed
+  void odrive_adjust_max_velocity(float amount);                                   // dpad up and down will increment and decrement speed
   void odrive_toggle_pen();                                                          // left joystick button to raise/lower pen
   void odrive_toggle_send_commands();
   void odrive_set_input_velocity(int8_t axis, float velocity);
@@ -68,12 +71,12 @@ private:
   struct params_t
   {
     int64_t control_loop_frequency;
-    double left_arm_length;
-    double right_arm_length;
-    double right_arm_extension_length;
-    double left_arm_extension_length;
-    double homed_joint_offset;
-    int64_t encoder_counts_per_mm;
+    float L2;
+    float L1;
+    float L3;
+    float A1;
+    float homed_joint_offset;
+    float mm_per_rev;
   } params_;
 
   struct joy_data_t
@@ -106,10 +109,15 @@ private:
   float x_vel_ = 0.0;
   float y_vel_ = 0.0;
 
+  float a_pos_; // rev
+  float b_pos_; // rev
+  float a_vel_; // rev/s
+  float b_vel_; // rev/s
+
   float a_vel_setpoint_ = 0.0;
   float b_vel_setpoint_ = 0.0;
 
-  float max_velocity_ = 10000000.0;
+  float max_velocity_ = 5.0;
 
   bool is_odrive_alive_ = false;
   struct odrive_axis_state_t
