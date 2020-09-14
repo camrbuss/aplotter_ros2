@@ -44,13 +44,13 @@ private:
   void odrive_estop();                                                               // X button
   void odrive_clear_errors(int8_t axis);                                             // back button
   void odrive_set_control_mode(int8_t axis, int8_t control_mode, int8_t input_mode); // start button
-  void odrive_adjust_max_velocity(float amount);                                   // dpad up and down will increment and decrement speed
+  void odrive_adjust_max_velocity(float amount);                                     // dpad up and down will increment and decrement speed
   void odrive_toggle_pen();                                                          // left joystick button to raise/lower pen
   void odrive_toggle_send_commands();
   void odrive_set_input_velocity(int8_t axis, float velocity);
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
   rclcpp::Subscription<ros2_odrive_can::msg::OdriveStatus>::SharedPtr odrive_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscription_;
 
@@ -65,8 +65,6 @@ private:
   rclcpp::Client<ros2_odrive_can::srv::ClearErrors>::SharedPtr odrive_clear_errors_client_;
 
   sensor_msgs::msg::JointState joint_state_msg_;
-  // TODO: Segmentation Fault when using a private request
-  // std::shared_ptr<ros2_odrive_can::srv::SetInputVel_Request> input_vel_request_;
 
   struct params_t
   {
@@ -106,13 +104,15 @@ private:
   joy_data_t joy_current_state_;
   joy_data_t joy_previous_state_;
 
-  float x_vel_ = 0.0;
+  float x_vel_ = 0.0; // desired vel in mm/s from joystick
   float y_vel_ = 0.0;
 
-  float a_pos_; // rev
-  float b_pos_; // rev
-  float a_vel_; // rev/s
-  float b_vel_; // rev/s
+  float a_pos_rev_;   // rev
+  float b_pos_rev_;   // rev
+  float a_vel_rev_s_; // rev/s
+  float b_vel_rev_s_; // rev/s
+  float a_pos_mm_; // mm
+  float b_pos_mm_; // mm
 
   float a_vel_setpoint_ = 0.0;
   float b_vel_setpoint_ = 0.0;

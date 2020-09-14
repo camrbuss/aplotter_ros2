@@ -65,5 +65,6 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp"
-    }
+    },
+    "python.formatting.provider": "yapf"
 }
