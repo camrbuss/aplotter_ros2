@@ -15,69 +15,41 @@ This repository is dependend on a ROS2 CAN ODrive package found at https://githu
 
 Use the Law of Cosines to solve the forward kinematics
 
-$$\beta(t) = \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(- a{\left(t \right)} + b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}$$
+<img src="https://render.githubusercontent.com/render/math?math=\beta(t) = \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(- a{\left(t \right)} + b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}">
 
-$$x(t) = b{\left(t \right)} - L_{3} \cos{\left(A_{1} + \beta(t) \right)}$$
+<img src="https://render.githubusercontent.com/render/math?math=\beta(t) = \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(- a{\left(t \right)} + b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}">
 
-$$y(t) = L_{3} \sin{\left(A_{1} + \beta(t) \right)}$$
+<img src="https://render.githubusercontent.com/render/math?math=x(t) = b{\left(t \right)} - L_{3} \cos{\left(A_{1} + \beta(t) \right)}">
 
-Take the derivative of x and y with respect to time
+<img src="https://render.githubusercontent.com/render/math?math=y(t) = L_{3} \sin{\left(A_{1} + \beta(t) \right)}">
 
-$$\frac{d}{d t} x{\left(t \right)} = \frac{L_{3} \left(\frac{d}{d t} a{\left(t \right)} - \frac{d}{d t} b{\left(t \right)}\right) \left(- L_{1}^{2} + L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right) \sin{\left(A_{1} + \arccos{\left(\frac{- L_{1}^{2} + L_{2}^{2} - \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(a{\left(t \right)} - b{\left(t \right)}\right)} \right)} \right)}}{L_{1} \sqrt{\frac{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2} - \left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}} + \frac{d}{d t} b{\left(t \right)}$$
+Take the derivative of x(t) and y(t) with respect to time
 
-$$\frac{d}{d t} y{\left(t \right)} = \frac{L_{3} \left(\frac{d}{d t} a{\left(t \right)} - \frac{d}{d t} b{\left(t \right)}\right) \left(- L_{1}^{2} + L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right) \cos{\left(A_{1} + \arccos{\left(\frac{- L_{1}^{2} + L_{2}^{2} - \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(a{\left(t \right)} - b{\left(t \right)}\right)} \right)} \right)}}{L_{1} \sqrt{\frac{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2} - \left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}$$
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} x{\left(t \right)} = \frac{L_{3} \left(\frac{d}{d t} a{\left(t \right)} - \frac{d}{d t} b{\left(t \right)}\right) \left(- L_{1}^{2} + L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right) \sin{\left(A_{1} + \arccos{\left(\frac{- L_{1}^{2} + L_{2}^{2} - \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(a{\left(t \right)} - b{\left(t \right)}\right)} \right)} \right)}}{L_{1} \sqrt{\frac{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2} - \left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}} + \frac{d}{d t} b{\left(t \right)}">
 
-Make substitutions for like terms while leaving $\frac{d}{d t} a{(t )}$
-and $\frac{d}{d t} b{(t )}$ un-substituted
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} y{\left(t \right)} = \frac{L_{3} \left(\frac{d}{d t} a{\left(t \right)} - \frac{d}{d t} b{\left(t \right)}\right) \left(- L_{1}^{2} + L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right) \cos{\left(A_{1} + \arccos{\left(\frac{- L_{1}^{2} + L_{2}^{2} - \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(a{\left(t \right)} - b{\left(t \right)}\right)} \right)} \right)}}{L_{1} \sqrt{\frac{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2} - \left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}">
 
-$$j(t) = - L_{3} \left(L_{1}^{2} - L_{2}^{2} - a^{2}{\left(t \right)} + 2 a{\left(t \right)} b{\left(t \right)} - b^{2}{\left(t \right)}\right)$$
-$$k(t) = A_{1} + \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}$$
-$$l(t) = 2 L_{1} \sqrt{1 - \frac{\left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}$$
+Make substitutions for like terms while leaving a'(t)
+and b'(t) un-substituted
+
+<img src="https://render.githubusercontent.com/render/math?math=j(t) = - L_{3} \left(L_{1}^{2} - L_{2}^{2} - a^{2}{\left(t \right)} + 2 a{\left(t \right)} b{\left(t \right)} - b^{2}{\left(t \right)}\right)">
+<img src="https://render.githubusercontent.com/render/math?math=k(t) = A_{1} + \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}">
+<img src="https://render.githubusercontent.com/render/math?math=l(t) = 2 L_{1} \sqrt{1 - \frac{\left(L_{1}^{2} - L_{2}^{2} + \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}\right)^{2}}{4 L_{1}^{2} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}}} \left(a{\left(t \right)} - b{\left(t \right)}\right)^{2}">
 
 Further substitute
 
-$$\frac{d}{d t} f{(t )} = \frac{j(t) \sin({k(t)})}{l(t)}$$
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} f{(t )} = \frac{j(t) \sin({k(t)})}{l(t)}">
 
-$$\frac{d}{d t} g{(t )} = \frac{j(t) \cos({k(t)})}{l(t)}$$
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} g{(t )} = \frac{j(t) \cos({k(t)})}{l(t)}">
 
-Factor out $\frac{d}{d t} a{(t )}$ and $\frac{d}{d t} b{(t )}$
+Factor out a'(t) and b'(t)
 
-$$\frac{d}{d t} x{(t )} =  \frac{d}{d t} a{(t )} f(t) + \frac{d}{d t} b{(t )} ( 1 - f(t))$$
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} x{(t )} =  \frac{d}{d t} a{(t )} f(t) + \frac{d}{d t} b{(t )} ( 1 - f(t))">
 
-$$\frac{d}{d t} y{(t )} =  + \frac{d}{d t} a{(t )} g(t) + \frac{d}{d t} b{(t )}  - g(t)$$
+<img src="https://render.githubusercontent.com/render/math?math=\frac{d}{d t} y{(t )} =  + \frac{d}{d t} a{(t )} g(t) + \frac{d}{d t} b{(t )}  - g(t)">
 
-Transform into a Matrix form
-
-$$\begin{bmatrix}
-    \frac{d}{d t} x{(t )} \\ 
-    \frac{d}{d t} y{(t )}
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-    f(t) & 1-f(t) \\ 
-    g(t) & -g(t)
-    \end{bmatrix}
-    \begin{bmatrix}
-    \frac{d}{d t} a{(t )} \\ 
-    \frac{d}{d t} b{(t )}
-    \end{bmatrix}$$
-
-Take the inverse to solve for $\frac{d}{d t} a{(t )}$ and
-$\frac{d}{d t} b{(t )}$
-
-$$\begin{bmatrix}
-    \frac{d}{d t} a{(t )} \\ 
-    \frac{d}{d t} b{(t )}
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-    1 & -\frac{f(t)-1}{g(t)} \\
-    1 & -\frac{f(t)}{g(t)} \\
-    \end{bmatrix}
-    \begin{bmatrix}
-    \frac{d}{d t} x{(t )} \\ 
-    \frac{d}{d t} y{(t )}
-    \end{bmatrix}$$
+Transform into a Matrix form, and then take the inverse to solve for a'(t) and b'(t)
+![](doc/matrix_equations.png)
 
 Implement in C++ with a(t) and b(t) coming in as discrete measurements, x'(t) and y'(t) being set by the user, and a'(t) and b'(t) being sent to the motor controllers.
 
