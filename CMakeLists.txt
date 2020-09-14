@@ -22,14 +22,27 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(ros2_odrive_can REQUIRED)
 
-add_executable(aplotter_state_publisher src/aplotter_state_publisher.cpp)
-ament_target_dependencies(aplotter_state_publisher rclcpp sensor_msgs ros2_odrive_can)
+include_directories(include)
 
-target_include_directories(aplotter_state_publisher PUBLIC
+add_library(aplotter_library SHARED
+  src/aplotter_state_publisher.cpp)
+ament_target_dependencies(aplotter_library rclcpp ros2_odrive_can sensor_msgs)
+
+add_executable(aplotter src/aplotter.cpp)
+target_link_libraries(aplotter aplotter_library)
+ament_target_dependencies(aplotter rclcpp)
+
+target_include_directories(aplotter PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS aplotter_state_publisher
+install(TARGETS
+  aplotter_library
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+install(TARGETS aplotter
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 

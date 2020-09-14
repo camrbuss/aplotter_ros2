@@ -1,1 +1,4 @@
 *.code-workspace
+doc/inverse_kinematics.aux
+doc/inverse_kinematics.dvi
+doc/inverse_kinematics.log

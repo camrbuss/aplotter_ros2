@@ -6,13 +6,16 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "/home/camrbuss/ws_ros2/src/aplotter_ros2/include/**",
-                "/usr/include/**"
+                "./include/**",
+                "/usr/include/**",
+                "/opt/ros/foxy/include/**",
+                "../../install/ros2_odrive_can/include/**"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/usr/bin/clang",
-            "cStandard": "c11"
+            "cStandard": "c11",
+            "cppStandard": "c++14"
         }
     ],
     "version": 4
