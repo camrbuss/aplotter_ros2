@@ -30,8 +30,8 @@ APlotterStatePublisher::APlotterStatePublisher() : Node("aplotter_state_publishe
   RCLCPP_INFO(this->get_logger(), "Param mm_per_rev is: %i", params_.mm_per_rev);
 
   joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / params_.control_loop_frequency), std::bind(&APlotterStatePublisher::timer_callback, this));
-  timer_->cancel();
+  aplotter_position_publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("aplotter/aplotter_position", 10);
+  aplotter_velocity_subscription_ = this->create_subscription<geometry_msgs::msg::Pose>("aplotter/aplotter_desired_velocity", 10, std::bind(&APlotterStatePublisher::planner_callback, this, std::placeholders::_1));
   odrive_subscription_ = this->create_subscription<ros2_odrive_can::msg::OdriveStatus>("/odrive/odrive_status", 5, std::bind(&APlotterStatePublisher::odrive_status_callback, this, std::placeholders::_1));
   joy_subscription_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&APlotterStatePublisher::joy_callback, this, std::placeholders::_1));
 
@@ -93,6 +93,11 @@ APlotterStatePublisher::APlotterStatePublisher() : Node("aplotter_state_publishe
   joint_state_msg_.position.push_back(0.0);
   joint_state_msg_.position.push_back(0.0);
   joint_state_msg_.position.push_back(0.0);
+
+  aplotter_position_msg_.header.frame_id = "/base_link";
+
+  timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / params_.control_loop_frequency), std::bind(&APlotterStatePublisher::timer_callback, this));
+  timer_->reset();
 }
 
 APlotterStatePublisher::~APlotterStatePublisher()
@@ -101,16 +106,15 @@ APlotterStatePublisher::~APlotterStatePublisher()
 
 void APlotterStatePublisher::timer_callback()
 {
-
-  if (odrive_axis_[0].error || odrive_axis_[1].error || (odrive_axis_[0].state != 8) || (odrive_axis_[1].state != 8))
+  odrive_get_encoder_estimates(0);
+  odrive_get_encoder_estimates(1);
+  compute_jacobian();
+  if ((odrive_axis_[0].error || odrive_axis_[1].error || (odrive_axis_[0].state != 8) || (odrive_axis_[1].state != 8)) && send_commands_)
   {
-    RCLCPP_ERROR(this->get_logger(), "Could not proceed in control loop! A0 S: %i E: %i A1 S: %i E: %i", odrive_axis_[0].state, odrive_axis_[0].error, odrive_axis_[1].state, odrive_axis_[1].error);
+    RCLCPP_ERROR(this->get_logger(), "Could not send commands! A0 S: %i E: %i A1 S: %i E: %i", odrive_axis_[0].state, odrive_axis_[0].error, odrive_axis_[1].state, odrive_axis_[1].error);
   }
-  else
+  else if (send_commands_)
   {
-    odrive_get_encoder_estimates(0);
-    odrive_get_encoder_estimates(1);
-    compute_jacobian();
     odrive_set_input_velocity(0, this->b_vel_setpoint_);
     odrive_set_input_velocity(1, this->a_vel_setpoint_);
   }
@@ -119,9 +123,15 @@ void APlotterStatePublisher::timer_callback()
   joint_state_msg_.position[0] = this->a_pos_mm_;
   joint_state_msg_.position[1] = this->b_pos_mm_;
   joint_state_msg_.position[2] = std::acos((std::pow(params_.L2, 2.0) + std::pow((joint_state_msg_.position[1] - joint_state_msg_.position[0]), 2.0) - std::pow(params_.L1, 2.0)) / (2.0 * params_.L2 * (joint_state_msg_.position[1] - joint_state_msg_.position[0])));
-  joint_state_msg_.position[3] = M_PI - std::acos((std::pow(params_.L1, 2.0) + std::pow((joint_state_msg_.position[1] - joint_state_msg_.position[0]), 2.0) - std::pow(params_.L2, 2.0)) / (2.0 * params_.L1 * (joint_state_msg_.position[1] - joint_state_msg_.position[0])));
-
+  joint_state_msg_.position[3] = -params_.A1 + M_PI - std::acos((std::pow(params_.L1, 2.0) + std::pow((joint_state_msg_.position[1] - joint_state_msg_.position[0]), 2.0) - std::pow(params_.L2, 2.0)) / (2.0 * params_.L1 * (joint_state_msg_.position[1] - joint_state_msg_.position[0])));
   joint_state_publisher_->publish(joint_state_msg_);
+
+  aplotter_position_msg_.header.stamp = ros_clock_.now();
+  float beta = joint_state_msg_.position[3];
+  aplotter_position_msg_.point.x = this->b_pos_mm_ + params_.L3 * std::cos(beta);
+  aplotter_position_msg_.point.y = params_.L3 * std::sin(beta);
+  aplotter_position_msg_.point.z = 0;
+  aplotter_position_publisher_->publish(aplotter_position_msg_);
 }
 
 void APlotterStatePublisher::odrive_status_callback(const ros2_odrive_can::msg::OdriveStatus::SharedPtr msg)
@@ -165,7 +175,14 @@ void APlotterStatePublisher::compute_jacobian()
   this->a_vel_setpoint_ = this->a_vel_setpoint_ / this->params_.mm_per_rev; // mm/s back to rev/s
   this->b_vel_setpoint_ = this->b_vel_setpoint_ / this->params_.mm_per_rev;
 }
-
+void APlotterStatePublisher::planner_callback(const geometry_msgs::msg::Pose::SharedPtr msg)
+{
+  if (!this->is_joy_vel_enabled_)
+  {
+    this->x_vel_ = msg->orientation.x * max_velocity_;
+    this->y_vel_ = msg->orientation.y * max_velocity_;
+  }
+}
 void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   this->joy_current_state_.b_a = msg->buttons[0];
@@ -219,6 +236,15 @@ void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr
   if ((joy_current_state_.a_cross_horizontal != joy_previous_state_.a_cross_horizontal) && (joy_current_state_.a_cross_horizontal > 0.5) && joy_current_state_.b_left_bumper)
     this->odrive_set_control_mode(1, 2, 1);
 
+  // if ((joy_current_state_.a_cross_horizontal != joy_previous_state_.a_cross_horizontal) && (joy_current_state_.a_cross_horizontal > 0.5))
+  //   this->send_commands_ = !this->send_commands_;
+
+  if ((joy_current_state_.a_cross_horizontal != joy_previous_state_.a_cross_horizontal) && (joy_current_state_.a_cross_horizontal < -0.5))
+  {
+    this->is_joy_vel_enabled_ = !this->is_joy_vel_enabled_;
+    RCLCPP_INFO(this->get_logger(), "Aplotter - Is Joystick in velocity control: %u", is_joy_vel_enabled_);
+  }
+
   // TODO: Fix increment ammount to parameter
   if ((joy_current_state_.a_cross_vertical != joy_previous_state_.a_cross_vertical) && (joy_current_state_.a_cross_vertical > 0.5))
     this->odrive_adjust_max_velocity(VELOCITYINCREMENTAMOUNT);
@@ -235,9 +261,12 @@ void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr
   if ((joy_current_state_.b_left_stick_button != joy_previous_state_.b_left_stick_button) && joy_current_state_.b_left_stick_button)
     this->odrive_toggle_pen();
 
-  // Note X axis if flipped to what is expected from joy
-  this->x_vel_ = -max_velocity_ * this->joy_current_state_.a_left_stick_horizontal;
-  this->y_vel_ = max_velocity_ * this->joy_current_state_.a_left_stick_vertical;
+  if (is_joy_vel_enabled_)
+  {
+    // Note X axis if flipped to what is expected from joy
+    this->x_vel_ = -max_velocity_ * this->joy_current_state_.a_left_stick_horizontal;
+    this->y_vel_ = max_velocity_ * this->joy_current_state_.a_left_stick_vertical;
+  }
 
   joy_previous_state_ = joy_current_state_;
 }
@@ -379,22 +408,22 @@ void APlotterStatePublisher::odrive_toggle_pen()
 void APlotterStatePublisher::odrive_toggle_send_commands()
 {
   // TODO: Prevent starting the time unless there are no errors and we are in closed loop control
-  if (this->timer_->is_canceled() || odrive_axis_[0].error || odrive_axis_[1].error || (odrive_axis_[0].state != 8) || (odrive_axis_[1].state != 8))
+  if (!send_commands_ || odrive_axis_[0].error || odrive_axis_[1].error || (odrive_axis_[0].state != 8) || (odrive_axis_[1].state != 8))
   {
     if (odrive_axis_[0].error || odrive_axis_[1].error || (odrive_axis_[0].state != 8) || (odrive_axis_[1].state != 8))
     {
-      RCLCPP_WARN(this->get_logger(), "Could not enter control loop! A0 S: %i E: %i A1 S: %i E: %i", odrive_axis_[0].state, odrive_axis_[0].error, odrive_axis_[1].state, odrive_axis_[1].error);
-      this->timer_->cancel();
+      RCLCPP_WARN(this->get_logger(), "Could not send commands! A0 S: %i E: %i A1 S: %i E: %i", odrive_axis_[0].state, odrive_axis_[0].error, odrive_axis_[1].state, odrive_axis_[1].error);
+      send_commands_ = false;
     }
     else
     {
       RCLCPP_INFO(this->get_logger(), "ODrive Starting to Send Commands at %i Hz", params_.control_loop_frequency);
-      this->timer_->reset();
+      send_commands_ = true;
     }
   }
   else
   {
     RCLCPP_INFO(this->get_logger(), "ODrive No Longer Sending Commands");
-    this->timer_->cancel();
+    send_commands_ = false;
   }
 }

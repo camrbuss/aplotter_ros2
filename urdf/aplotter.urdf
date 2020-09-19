@@ -83,7 +83,7 @@
         </visual>
     </link>
     <joint name="rightJoint" type="continuous">
-        <origin xyz="0 0 0" rpy="0 0 -0.12524034" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <parent link="rightPLink" />
         <child link="rightLink" />
         <axis xyz="0 0 1" />

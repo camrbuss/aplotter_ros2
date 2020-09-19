@@ -9,6 +9,9 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     pkg_share = FindPackageShare('aplotter_ros2').find('aplotter_ros2')
     urdf_file = os.path.join(pkg_share, 'urdf', 'aplotter.urdf')
+    with open(urdf_file, 'r') as infp:
+        robot_desc = infp.read()
+    coordinates_file = os.path.join(pkg_share, 'launch', 'coordinates.csv')
 
     joy = launch_ros.actions.Node(package='joy_linux',
                                   executable='joy_linux_node',
@@ -19,7 +22,10 @@ def generate_launch_description():
     rsp = launch_ros.actions.Node(package='robot_state_publisher',
                                   executable='robot_state_publisher',
                                   output='both',
-                                  arguments=[urdf_file])
+                                  parameters=[
+                                      {"robot_description": robot_desc},
+                                      {"publish_frequency": 50.0}
+                                  ])
     asp = launch_ros.actions.Node(package='aplotter_ros2',
                                   executable='aplotter',
                                   output='both',
@@ -30,7 +36,8 @@ def generate_launch_description():
                                       {"right_arm_full_length": 565.0}, # mm
                                       {"right_arm_offset_angle": 0.0923}, # rad
                                       {"homed_joint_offset": 95.0}, # mm
-                                      {"mm_per_rev": 12.417} # rev/mm, (20/89)*pi*17.598 Measured approximately 12.8 mm per rev
+                                      {"mm_per_rev": 12.417}, # rev/mm, (20/89)*pi*17.598 Measured approximately 12.8 mm per rev
+                                      {"coordinates_file": coordinates_file}
                                   ])
 
     return launch.LaunchDescription([joy, roc, rsp, asp])

@@ -17,8 +17,6 @@ Use the Law of Cosines to solve the forward kinematics
 
 <img src="https://render.githubusercontent.com/render/math?math=\beta(t) = \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(- a{\left(t \right)} + b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}">
 
-<img src="https://render.githubusercontent.com/render/math?math=\beta(t) = \arccos{\left(\frac{L_{1}^{2} - L_{2}^{2} + \left(- a{\left(t \right)} + b{\left(t \right)}\right)^{2}}{2 L_{1} \left(- a{\left(t \right)} + b{\left(t \right)}\right)} \right)}">
-
 <img src="https://render.githubusercontent.com/render/math?math=x(t) = b{\left(t \right)} - L_{3} \cos{\left(A_{1} + \beta(t) \right)}">
 
 <img src="https://render.githubusercontent.com/render/math?math=y(t) = L_{3} \sin{\left(A_{1} + \beta(t) \right)}">
