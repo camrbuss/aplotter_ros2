@@ -14,8 +14,12 @@ APlotterVelocityPlanner::APlotterVelocityPlanner(/* args */) : Node("aplotter_ve
         this->~APlotterVelocityPlanner();
     }
 
-    desired_velocity_publisher_ = this->create_publisher<geometry_msgs::msg::Pose>("aplotter/aplotter_desired_velocity", 10);
+    desired_velocity_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("aplotter/aplotter_desired_velocity", 10);
     aplotter_position_subscription_ = this->create_subscription<geometry_msgs::msg::PointStamped>("aplotter/aplotter_position", 10, std::bind(&APlotterVelocityPlanner::position_callback, this, std::placeholders::_1));
+    aplotter_goal_publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("aplotter/aplotter_goal", 10);
+
+    goal_msg_.header.frame_id = "/base_link";
+    desired_velocity_msg_.header.frame_id = "/base_link";
 }
 
 APlotterVelocityPlanner::~APlotterVelocityPlanner()
@@ -58,23 +62,27 @@ bool APlotterVelocityPlanner::read_points(std::string filename)
 void APlotterVelocityPlanner::position_callback(const geometry_msgs::msg::PointStamped::SharedPtr msg)
 {
     // Set Pose position to the same as the point of the end effector
-    desired_velocity_msg_.position.x = msg->point.x;
-    desired_velocity_msg_.position.y = msg->point.y;
-    desired_velocity_msg_.position.z = 0;
+    desired_velocity_msg_.header.stamp = ros_clock_.now();
+    desired_velocity_msg_.pose.position.x = msg->point.x;
+    desired_velocity_msg_.pose.position.y = msg->point.y;
+    desired_velocity_msg_.pose.position.z = 0;
 
-    RCLCPP_INFO(this->get_logger(), "Current Position: X: %+.3f Y: %+.3f Goal Position: X: %+.3f Y: %+.3f", msg->point.x, msg->point.y, points_.front().x, points_.front().y);
+    goal_msg_.header.stamp = ros_clock_.now();
+    goal_msg_.point.x = points_.front().x;
+    goal_msg_.point.y = points_.front().y;
+    goal_msg_.point.z = 0;
+    aplotter_goal_publisher_->publish(goal_msg_);
+
+    // RCLCPP_INFO(this->get_logger(), "Current Position: X: %+.3f Y: %+.3f Goal Position: X: %+.3f Y: %+.3f", msg->point.x, msg->point.y, points_.front().x, points_.front().y);
     // Get vector pointing towards where we want to go
     float dx = points_.front().x - msg->point.x;
     float dy = points_.front().y - msg->point.y;
     float dist = std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
-    // Normalize the vectors
-    // desired_velocity_msg_.x = dx / dist;
-    // desired_velocity_msg_.y = dy / dist;
-    // desired_velocity_msg_.z = 0;
-    desired_velocity_msg_.orientation.x = dx / dist;
-    desired_velocity_msg_.orientation.y = dy / dist;
-    desired_velocity_msg_.orientation.z = 0;
-    desired_velocity_msg_.orientation.w = 0;
+    float alpha = std::atan2(dy, dx);
+    desired_velocity_msg_.pose.orientation.x = 0;
+    desired_velocity_msg_.pose.orientation.y = 0;
+    desired_velocity_msg_.pose.orientation.z = std::sin(alpha / 2.0f);
+    desired_velocity_msg_.pose.orientation.w = std::cos(alpha / 2.0f);
 
     // If we are not at the last point and we are within the acceptable error, get the next point
     if (points_.size() > 1 && dist < acceptable_error_)
@@ -87,10 +95,10 @@ void APlotterVelocityPlanner::position_callback(const geometry_msgs::msg::PointS
     if (points_.size() == 1 && dist < acceptable_error_)
     {
         RCLCPP_INFO(this->get_logger(), "APlotterVelocityPlanner - Goal Reached!");
-        desired_velocity_msg_.orientation.x = 0;
-        desired_velocity_msg_.orientation.y = 0;
-        desired_velocity_msg_.orientation.z = 0;
-        desired_velocity_msg_.orientation.w = 0;
+        desired_velocity_msg_.pose.orientation.x = 0;
+        desired_velocity_msg_.pose.orientation.y = 0;
+        desired_velocity_msg_.pose.orientation.z = 0;
+        desired_velocity_msg_.pose.orientation.w = 0;
     }
 
     desired_velocity_publisher_->publish(desired_velocity_msg_);

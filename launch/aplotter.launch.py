@@ -33,7 +33,7 @@ def generate_launch_description():
                                       {"control_loop_frequency": 50}, # In hz
                                       {"left_arm_length": 361.0}, # mm
                                       {"right_arm_pivot_length": 379.62}, # mm
-                                      {"right_arm_full_length": 565.0}, # mm
+                                      {"right_arm_full_length": 567.5}, # mm
                                       {"right_arm_offset_angle": 0.0923}, # rad
                                       {"homed_joint_offset": 95.0}, # mm
                                       {"mm_per_rev": 12.417}, # rev/mm, (20/89)*pi*17.598 Measured approximately 12.8 mm per rev

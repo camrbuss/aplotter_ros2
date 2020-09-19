@@ -15,7 +15,7 @@
 
     <link name="leftPLink">
         <visual>
-            <origin xyz="0 -41.356 0" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
                 <mesh filename="package://aplotter_ros2/urdf/carriage.stl" />
             </geometry>
@@ -25,7 +25,7 @@
         </visual>
     </link>
     <joint name="leftPJoint" type="prismatic">
-        <origin xyz="0 41.356 71.042" rpy="0 0 0" />
+        <origin xyz="0 0 71.042" rpy="0 0 0" />
         <parent link="base_link" />
         <child link="leftPLink" />
         <axis xyz="1 0 0" />
@@ -54,7 +54,7 @@
 
     <link name="rightPLink">
         <visual>
-            <origin xyz="0 -41.356 0" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
                 <mesh filename="package://aplotter_ros2/urdf/carriage.stl" />
             </geometry>
@@ -64,7 +64,7 @@
         </visual>
     </link>
     <joint name="rightPJoint" type="prismatic">
-        <origin xyz="0 41.356 71.042" rpy="0 0 0" />
+        <origin xyz="0 0 71.042" rpy="0 0 0" />
         <parent link="base_link" />
         <child link="rightPLink" />
         <axis xyz="1 0 0" />

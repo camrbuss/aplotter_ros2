@@ -5,9 +5,7 @@ This repository is dependend on a ROS2 CAN ODrive package found at https://githu
 
 ![CAD](https://lh3.googleusercontent.com/pw/ACtC-3clGLWjGjPLQd7VhQk3QP3K9Lg39KJp0tQEz6EgUK5Ak4WE-YtDJ8ZNHEzONkK3RGVDRFE0xoxDykFvw1JDTLQJV9iui-XEQ9JTUxxphp_TFRbhiN1gXHQWvIN8GwDhQNKsty9ygs0llwD1Yx70qwJe6w=w1168-h902-no?authuser=0)
 
-
-
-
+[OnShape CAD Models](https://cad.onshape.com/documents/659b98b8e4e5f48dc0d1c1cf/w/8debc2aa847977d2ea1bd961/e/ff752f2c7fe58914142c1f60)
 
 ## Inverse Kinematics
 

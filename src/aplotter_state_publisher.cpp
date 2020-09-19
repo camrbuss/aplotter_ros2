@@ -31,7 +31,7 @@ APlotterStatePublisher::APlotterStatePublisher() : Node("aplotter_state_publishe
 
   joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
   aplotter_position_publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("aplotter/aplotter_position", 10);
-  aplotter_velocity_subscription_ = this->create_subscription<geometry_msgs::msg::Pose>("aplotter/aplotter_desired_velocity", 10, std::bind(&APlotterStatePublisher::planner_callback, this, std::placeholders::_1));
+  aplotter_velocity_subscription_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("aplotter/aplotter_desired_velocity", 10, std::bind(&APlotterStatePublisher::planner_callback, this, std::placeholders::_1));
   odrive_subscription_ = this->create_subscription<ros2_odrive_can::msg::OdriveStatus>("/odrive/odrive_status", 5, std::bind(&APlotterStatePublisher::odrive_status_callback, this, std::placeholders::_1));
   joy_subscription_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&APlotterStatePublisher::joy_callback, this, std::placeholders::_1));
 
@@ -140,7 +140,6 @@ void APlotterStatePublisher::odrive_status_callback(const ros2_odrive_can::msg::
   if ((msg->axis_error > 0) && (odrive_axis_[msg->axis].error != msg->axis_error))
   {
     RCLCPP_ERROR(this->get_logger(), "ODrive ERROR A0 S: %i E: %i A1 S: %i E: %i", odrive_axis_[0].state, odrive_axis_[0].error, odrive_axis_[1].state, odrive_axis_[1].error);
-    this->timer_->cancel();
     this->odrive_set_input_velocity(0, 0); // Set input Vel to 0
     this->odrive_set_input_velocity(1, 0);
     this->odrive_set_requested_state(0, 1); // Set Axis to idle
@@ -175,12 +174,12 @@ void APlotterStatePublisher::compute_jacobian()
   this->a_vel_setpoint_ = this->a_vel_setpoint_ / this->params_.mm_per_rev; // mm/s back to rev/s
   this->b_vel_setpoint_ = this->b_vel_setpoint_ / this->params_.mm_per_rev;
 }
-void APlotterStatePublisher::planner_callback(const geometry_msgs::msg::Pose::SharedPtr msg)
+void APlotterStatePublisher::planner_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
   if (!this->is_joy_vel_enabled_)
   {
-    this->x_vel_ = msg->orientation.x * max_velocity_;
-    this->y_vel_ = msg->orientation.y * max_velocity_;
+    this->x_vel_ = msg->pose.orientation.x * max_velocity_;
+    this->y_vel_ = msg->pose.orientation.y * max_velocity_;
   }
 }
 void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
