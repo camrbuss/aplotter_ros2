@@ -8,6 +8,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "ros2_odrive_can/msg/odrive_status.hpp"
 #include "ros2_odrive_can/srv/set_axis_requested_state.hpp"
 #include "ros2_odrive_can/srv/set_controller_modes.hpp"
@@ -31,10 +33,10 @@ private:
   void timer_callback();
 
   void odrive_status_callback(const ros2_odrive_can::msg::OdriveStatus::SharedPtr msg);
-
+  void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg);
+  void planner_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void compute_jacobian();
 
-  void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg);
 
   void odrive_get_encoder_estimates(int8_t axis);
   // TODO: Adjust response to use SharedFutureWithResponse. Current use seg faults
@@ -51,6 +53,8 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr aplotter_position_publisher_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr aplotter_velocity_subscription_;
   rclcpp::Subscription<ros2_odrive_can::msg::OdriveStatus>::SharedPtr odrive_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscription_;
 
@@ -65,6 +69,7 @@ private:
   rclcpp::Client<ros2_odrive_can::srv::ClearErrors>::SharedPtr odrive_clear_errors_client_;
 
   sensor_msgs::msg::JointState joint_state_msg_;
+  geometry_msgs::msg::PointStamped aplotter_position_msg_;
 
   struct params_t
   {
@@ -103,6 +108,9 @@ private:
   };
   joy_data_t joy_current_state_;
   joy_data_t joy_previous_state_;
+
+  bool is_joy_vel_enabled_ = false;
+  bool send_commands_ = false;
 
   float x_vel_ = 0.0; // desired vel in mm/s from joystick
   float y_vel_ = 0.0;

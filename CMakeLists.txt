@@ -20,13 +20,15 @@ find_package(ament_cmake REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(ros2_odrive_can REQUIRED)
 
 include_directories(include)
 
 add_library(aplotter_library SHARED
-  src/aplotter_state_publisher.cpp)
-ament_target_dependencies(aplotter_library rclcpp ros2_odrive_can sensor_msgs)
+  src/aplotter_state_publisher.cpp
+  src/aplotter_velocity_planner.cpp)
+ament_target_dependencies(aplotter_library rclcpp ros2_odrive_can sensor_msgs geometry_msgs)
 
 add_executable(aplotter src/aplotter.cpp)
 target_link_libraries(aplotter aplotter_library)
