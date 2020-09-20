@@ -178,8 +178,9 @@ void APlotterStatePublisher::planner_callback(const geometry_msgs::msg::PoseStam
 {
   if (!this->is_joy_vel_enabled_)
   {
-    this->x_vel_ = msg->pose.orientation.x * max_velocity_;
-    this->y_vel_ = msg->pose.orientation.y * max_velocity_;
+    float alpha = 2.0 * std::asin(msg->pose.orientation.z);
+    this->x_vel_ = max_velocity_*std::cos(alpha);
+    this->y_vel_ = max_velocity_*std::sin(alpha);
   }
 }
 void APlotterStatePublisher::joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)

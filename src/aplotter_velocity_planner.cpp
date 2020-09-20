@@ -95,10 +95,6 @@ void APlotterVelocityPlanner::position_callback(const geometry_msgs::msg::PointS
     if (points_.size() == 1 && dist < acceptable_error_)
     {
         RCLCPP_INFO(this->get_logger(), "APlotterVelocityPlanner - Goal Reached!");
-        desired_velocity_msg_.pose.orientation.x = 0;
-        desired_velocity_msg_.pose.orientation.y = 0;
-        desired_velocity_msg_.pose.orientation.z = 0;
-        desired_velocity_msg_.pose.orientation.w = 0;
     }
 
     desired_velocity_publisher_->publish(desired_velocity_msg_);
